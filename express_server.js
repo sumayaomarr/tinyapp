@@ -3,17 +3,28 @@ const app = express();
 const PORT = 8080;
 app.set("view engine", "ejs");
 
+Fardosa:
+	function generateRandomString() {
+  let result = "";
 
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-function generateRandomString() {
-}
+  const charactersLength = characters.length;
+
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+  };
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -46,6 +57,21 @@ app.get("/urls/:shortURL", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+const longUrl = req.body.longURL;
+const shortURL = generateRandomString(longUrl)
+urlDatabase[longUrl] = longUrl;  
+res.redirect(`urls/${shortURL}`)    
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  if (urlDatabase[req.params.shortURL]) {
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    if (longURL === undefined) {
+      res.status(302);
+    } else {
+      res.redirect(longURL);
+    }
+  } else {
+    res.status(404).send("The short URL you want to access does not match any long URLs in our system.");
+  }
 });
