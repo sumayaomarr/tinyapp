@@ -4,7 +4,7 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 
 Fardosa:
-	function generateRandomString() {
+function generateRandomString() {
   let result = "";
 
   const characters =
@@ -17,7 +17,7 @@ Fardosa:
   }
 
   return result;
-  };
+};
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -30,9 +30,6 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -57,10 +54,10 @@ app.get("/urls/:shortURL", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-const longUrl = req.body.longURL;
-const shortURL = generateRandomString(longUrl)
-urlDatabase[longUrl] = longUrl;  
-res.redirect(`urls/${shortURL}`)    
+  const longUrl = req.body.longURL;
+  const shortURL = generateRandomString(longUrl)
+  urlDatabase[shortURL] = longUrl;
+  res.redirect(`/urls/`)
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -74,4 +71,24 @@ app.get("/u/:shortURL", (req, res) => {
   } else {
     res.status(404).send("The short URL you want to access does not match any long URLs in our system.");
   }
+});
+
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  console.log(urlDatabase);
+  delete urlDatabase[shortURL]; 
+    res.redirect('/urls')
+  });
+
+  app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longUrl = req.body.longURL;
+  urlDatabase[shortURL] = longUrl;
+  res.redirect(`/urls/${shortURL}`)
+
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
