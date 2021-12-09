@@ -5,24 +5,24 @@ app.set("view engine", "ejs");
 
 const cookieParser = require('cookie-parser');
 
-const users = { 
+const users = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
 }
 
 
-const emailHasUser = function(email){
+const emailHasUser = function (email) {
   console.log(Object.keys(users));
-  for (const user of Object.keys(users)) 
-  {console.log(users[user]);
+  for (const user of Object.keys(users)) {
+    console.log(users[user]);
     console.log(email);
     if (users[user].email === email) {
       return true;
@@ -71,24 +71,25 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = {
-     urls: urlDatabase,
-     username: users[req.cookies["user_id"]]?.email || ""
-    };
-    
-    console.log(req.cookies)
+    urls: urlDatabase,
+    user: users[req.cookies["user_id"]]
+  };
+
+  console.log(req.cookies)
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username:users[req.cookies["user_id"]].email
-   };
+    user: users[req.cookies["user_id"]]
+  };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
-  username:users[req.cookies["user_id"]].email
+  const templateVars = {
+    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
 });
@@ -118,11 +119,11 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   console.log(urlDatabase);
-  delete urlDatabase[shortURL]; 
-    res.redirect('/urls')
-  });
+  delete urlDatabase[shortURL];
+  res.redirect('/urls')
+});
 
-  app.post("/urls/:shortURL", (req, res) => {
+app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longUrl = req.body.longURL;
   urlDatabase[shortURL] = longUrl;
@@ -131,21 +132,30 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username',username); 
+  const user = req.body.email;
+  const password = req.body.password;
+  if (!emailHasUser(email, user)) {
+    res.status(403).send("There is no account made with this email address");
+  } else {
+    const userID = userIdFromEmail(email, user);
+    if (!bcrypt.compareSync(password, user[userID].password)) {
+      res.status(403).send("The password you entered does not match the one associated with the provided email address");
+    } else {
+  res.cookie('user_id', user);
   res.redirect(`/urls/`)
-
+    }
+  }
 });
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id'); 
+  res.clearCookie('user_id');
   res.redirect(`/urls/`)
 });
 
 app.get("/register", (req, res) => {
-  
-  res.render("urls_register");
+
+  res.render("urls_registerC");
 
 });
 
@@ -161,19 +171,24 @@ app.post("/register", (req, res) => {
   } else if (emailHasUser(email)) {
     res.status(400).send("An account already exists for this email address");
   } else {
-  
-  users[id] = {
-  id,
-  email, 
-  password
+
+    users[id] = {
+      id,
+      email,
+      password
+    }
+
   }
-  console.log(users);
-}
-res.cookie('user_id',id); 
-console.log(users[id]);
+  res.cookie('user_id', id);
+  
   res.redirect(`/urls/`)
 });
 
+app.get("/login", (req, res) => {
+
+  res.render("urls_login");
+
+});
 
 
 
