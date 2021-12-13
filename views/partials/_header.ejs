@@ -5,10 +5,26 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+      <div class="navbar-nav mr-auto">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+
+    
       </div>
+      <% if (locals.user) { %>
+                <p class="pr-2"> Logged in as:  <%= user.email %></p>
+                <form action="/logout" method="POST">
+                  <div class="form-group mb-2">
+
+                  
+                    <button type="submit" class="btn btn-primary">Logout</button>
+                  </div>
+                </form> 
+                <%} else { %>
+                  <a class="nav-item nav-link" href="/login">login</a>
+                  <a class="nav-item nav-link" href="/register">register</a>
+                <% } %>
+     
     </div>
   </nav>
 </header>
