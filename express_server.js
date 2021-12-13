@@ -1,11 +1,13 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 app.set("view engine", "ejs");
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const getUserByEmail = require("./helper");
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(cookieSession({
   name: 'session',
@@ -97,10 +99,7 @@ const urlDatabase = {
   }
 };
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(cookieParser())
 
 
 app.get("/", (req, res) => {
@@ -119,7 +118,9 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const loggedIn = !!users[req.session.user_id]
-  console.log(loggedIn);
+  const user = users[req.session.user_id]
+  console.log("user", user)
+  console.log("session", req.session.user_id)
 
   if (loggedIn) {
     // res.redirect(`/urls/`)
@@ -223,7 +224,7 @@ app.post("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id
   const theNewUrl = { longURL, userID }
   const urls = urlsForUser(userID, urlDatabase)
-  if (!users) {
+  if (!userID) {
     res.status(404).send("Please login to edit urls")
   } else if (!urls[shortURL]) {
     res.status(404).send("you are not authorized to edit this URL") 
@@ -241,6 +242,7 @@ app.post("/login", (req, res) => {
     res.status(403).send("There is no account made with this email address");
   } else {
     const user = getUserByEmail(email, users);
+    console.log(user);
     if (!bcrypt.compareSync(password, user.password)) {
       res.status(403).send("The password you entered does not match the one associated with the provided email address");
     } else {
@@ -253,7 +255,7 @@ app.post("/login", (req, res) => {
 
 
 app.post("/logout", (req, res) => {
-  res.session('user_id');
+  req.session = null;
   res.redirect(`/urls`)
 });
 
@@ -266,7 +268,10 @@ app.get("/register", (req, res) => {
   if (loggedIn) {
     res.redirect(`/urls/`)
   } else {
-    res.render("urls_register");
+    const templateVars = {
+      user: users[loggedIn]
+    }
+    res.render("urls_register", templateVars);
   }
 });
 
@@ -305,7 +310,10 @@ app.get("/login", (req, res) => {
   if (loggedIn) {
     res.redirect(`/urls/`)
   } else {
-    res.render("urls_login");
+    const templateVars = {
+      user: users[loggedIn]
+    }
+    res.render("urls_login", templateVars);
   }
 });
 

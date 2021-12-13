@@ -11,7 +11,7 @@
 
     
       </div>
-      <% if (locals.user) { %>
+      <% if (user) { %>
                 <p class="pr-2"> Logged in as:  <%= user.email %></p>
                 <form action="/logout" method="POST">
                   <div class="form-group mb-2">
