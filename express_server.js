@@ -14,13 +14,6 @@ app.use(cookieSession({
   keys: ['my secret key', 'backup secret key'],
 }))
 
-// const getUserByEmail = function (email, database) {
-//   for (let user in database) {
-//     if (database[user].email === email) {
-//       return database[user].id;
-//     }
-//   }
-// }
 
 
 const cookieHasUser = function (cookie, userDatabase) {
@@ -242,7 +235,8 @@ app.post("/login", (req, res) => {
     res.status(403).send("There is no account made with this email address");
   } else {
     const user = getUserByEmail(email, users);
-    console.log(user);
+    console.log('============',user);
+    console.log('------', password);
     if (!bcrypt.compareSync(password, user.password)) {
       res.status(403).send("The password you entered does not match the one associated with the provided email address");
     } else {
@@ -258,10 +252,6 @@ app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect(`/urls`)
 });
-
-
-
-
 
 app.get("/register", (req, res) => {
   const loggedIn = !!req.session.user_id
