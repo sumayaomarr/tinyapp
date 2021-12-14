@@ -3,40 +3,14 @@ const app = express();
 const PORT = 8080;
 const bcrypt = require("bcryptjs");
 app.set("view engine", "ejs");
-// const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
-const getUserByEmail = require("./helper");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
-
+const { getUserByEmail, urlsForUser, emailHasUser, generateRandomString, cookieHasUser } = require("./helper");
 app.use(cookieSession({
   name: 'session',
   keys: ['my secret key', 'backup secret key'],
 }))
-
-
-
-const cookieHasUser = function (cookie, userDatabase) {
-  for (const user in userDatabase) {
-    if (cookie === user) {
-      console.log('this checks out')
-      return true;
-    }
-  } return null;
-};
-
-
-	const urlsForUser = function(id, urlDatabase) {
-  const userUrls = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      userUrls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userUrls;
-};
-
-
 
 const users = {
   "aJ48lW": {
@@ -52,35 +26,6 @@ const users = {
 }
 
 
-
-
-const emailHasUser = function (email) {
-  console.log(Object.keys(users));
-  for (const user of Object.keys(users)) {
-    console.log(users[user]);
-    console.log(email);
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return null;
-};
-
-function generateRandomString() {
-  let result = "";
-
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-  const charactersLength = characters.length;
-
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-
-  return result;
-};
-
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -91,7 +36,6 @@ const urlDatabase = {
     userID: "aJ48lW"
   }
 };
-
 
 
 
@@ -109,6 +53,10 @@ app.get("/hello", (req, res) => {
 });
 
 
+
+
+
+
 app.get("/urls", (req, res) => {
   const loggedIn = !!users[req.session.user_id]
   const user = users[req.session.user_id]
@@ -116,7 +64,6 @@ app.get("/urls", (req, res) => {
   console.log("session", req.session.user_id)
 
   if (loggedIn) {
-    // res.redirect(`/urls/`)
     
     const templateVars = {
       urls: urlsForUser(req.session.user_id,urlDatabase),
@@ -194,6 +141,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = req.session.user_id
   const urls = urlsForUser(req.session.user_id,urlDatabase)
@@ -208,6 +156,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[shortURL];
   res.redirect('/urls')
 });
+
 
 
 
@@ -228,30 +177,13 @@ app.post("/urls/:shortURL", (req, res) => {
 
 });
 
-app.post("/login", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  if (!getUserByEmail(email, users)) {
-    res.status(403).send("There is no account made with this email address");
-  } else {
-    const user = getUserByEmail(email, users);
-    console.log('============',user);
-    console.log('------', password);
-    if (!bcrypt.compareSync(password, user.password)) {
-      res.status(403).send("The password you entered does not match the one associated with the provided email address");
-    } else {
-      // res.session('user_id', user.id);
-      req.session.user_id = user.id;
-      res.redirect('/urls')
-    }
-  }
-});
 
 
-app.post("/logout", (req, res) => {
-  req.session = null;
-  res.redirect(`/urls`)
-});
+
+
+// -----------post & get for register----------------------------------------------------
+
+
 
 app.get("/register", (req, res) => {
   const loggedIn = !!req.session.user_id
@@ -264,6 +196,7 @@ app.get("/register", (req, res) => {
     res.render("urls_register", templateVars);
   }
 });
+
 
 
 
@@ -295,6 +228,13 @@ app.post("/register", (req, res) => {
 
 
 
+
+
+// -----------post & get for login----------------------------------------------------
+
+
+
+
 app.get("/login", (req, res) => {
   const loggedIn = users[req.session.user_id]
   if (loggedIn) {
@@ -308,12 +248,36 @@ app.get("/login", (req, res) => {
 });
 
 
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!getUserByEmail(email, users)) {
+    res.status(403).send("There is no account made with this email address");
+  } else {
+    const user = getUserByEmail(email, users);
+    console.log('============',user);
+    console.log('------', password);
+    if (!bcrypt.compareSync(password, user.password)) {
+      res.status(403).send("The password you entered does not match the one associated with the provided email address");
+    } else {
+      req.session.user_id = user.id;
+      res.redirect('/urls')
+    }
+  }
+});
 
 
 
 
+// post for logout
+
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect(`/urls`)
+});
 
 
+// app.listen for port 8080
 
 
 app.listen(PORT, () => {
