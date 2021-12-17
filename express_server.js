@@ -1,16 +1,23 @@
 const express = require("express");
-const app = express();
-const PORT = 8080;
 const bcrypt = require("bcryptjs");
-app.set("view engine", "ejs");
 const cookieSession = require('cookie-session');
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
 const { getUserByEmail, urlsForUser, emailHasUser, generateRandomString, cookieHasUser } = require("./helper");
+
+const app = express();
+
+app.set("view engine", "ejs");
+
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['my secret key', 'backup secret key'],
-}))
+}));
+
+const PORT = 8080;
+
+
+
 
 const users = {
   "aJ48lW": {
@@ -23,7 +30,7 @@ const users = {
     email: "user2@example.com",
     password:bcrypt.hashSync("dishwasher-funk", 10)
   }
-}
+};
 
 
 const urlDatabase = {
@@ -97,32 +104,24 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/urls/:shortURL", (req, res) => {
+  const userID = req.session.user_id
+  const shortURL = req.params.shortURL;
+  const urls = urlsForUser(userID, urlDatabase)
+  if (!userID) {
+    res.status(404).send("Please login to edit urls")
+  } else if (!urls[shortURL]) {
+    res.status(404).send("you are not authorized to edit this URL") 
+  };
+  
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL,
 
     user: users[req.session.user_id]
   };
   console.log(urlDatabase[req.params.shortURL].longURL)
+  
   res.render("urls_show", templateVars);
 });
-
-
-
-
-app.post("/urls", (req, res) => {
-  const longURL = req.body.longURL;
-  const shortURL = generateRandomString();
-
-  const userID = req.session.user_id
-  console.log(userID);
-  const theNewUrl = { longURL, userID }
-
-  urlDatabase[shortURL] = theNewUrl;
-  console.log(urlDatabase);
-  res.redirect(`/urls/`)
-
-});
-
 
 
 
@@ -134,13 +133,51 @@ app.get("/u/:shortURL", (req, res) => {
       res.status(302);
     } else {
       res.redirect(longURL);
-    }
+    };
   } else {
     res.status(404).send("The short URL you want to access does not match any long URLs in our system.");
-  }
+  };
 });
 
 
+app.get("/login", (req, res) => {
+  const loggedIn = users[req.session.user_id]
+  if (loggedIn) {
+    res.redirect(`/urls/`)
+  } else {
+    const templateVars = {
+      user: users[loggedIn]
+    };
+    res.render("urls_login", templateVars);
+  };
+});
+
+
+app.get("/register", (req, res) => {
+  const loggedIn = !!req.session.user_id
+  if (loggedIn) {
+    res.redirect(`/urls/`)
+  } else {
+    const templateVars = {
+      user: users[loggedIn]
+    };
+    res.render("urls_register", templateVars);
+  };
+});
+
+app.post("/urls", (req, res) => {
+  const longURL = req.body.longURL;
+  const shortURL = generateRandomString();
+
+  const userID = req.session.user_id
+  console.log(userID);
+  const theNewUrl = { longURL, userID }
+
+  urlDatabase[shortURL] = theNewUrl;
+  console.log(urlDatabase);
+  res.redirect(`/urls/${shortURL}`)
+
+});
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = req.session.user_id
@@ -152,7 +189,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.status(404).send("Please login to delete urls")
   } else if (!urls[shortURL]) {
     res.status(404).send("you are not authorized to delete this URL") 
-  }
+  };
   delete urlDatabase[shortURL];
   res.redirect('/urls')
 });
@@ -166,37 +203,12 @@ app.post("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id
   const theNewUrl = { longURL, userID }
   const urls = urlsForUser(userID, urlDatabase)
-  if (!userID) {
-    res.status(404).send("Please login to edit urls")
-  } else if (!urls[shortURL]) {
-    res.status(404).send("you are not authorized to edit this URL") 
-  }
+  
 
   urlDatabase[shortURL] = theNewUrl;
-  res.redirect(`/urls/${shortURL}`)
+  res.redirect(`/urls`)
 
 });
-
-
-
-
-
-// -----------post & get for register----------------------------------------------------
-
-
-
-app.get("/register", (req, res) => {
-  const loggedIn = !!req.session.user_id
-  if (loggedIn) {
-    res.redirect(`/urls/`)
-  } else {
-    const templateVars = {
-      user: users[loggedIn]
-    }
-    res.render("urls_register", templateVars);
-  }
-});
-
 
 
 
@@ -216,9 +228,9 @@ app.post("/register", (req, res) => {
       id,
       email,
       password: hashedPassword
-    }
+    };
 
-  }
+  };
   
   req.session.user_id = id;
 
@@ -227,25 +239,6 @@ app.post("/register", (req, res) => {
 
 
 
-
-
-
-// -----------post & get for login----------------------------------------------------
-
-
-
-
-app.get("/login", (req, res) => {
-  const loggedIn = users[req.session.user_id]
-  if (loggedIn) {
-    res.redirect(`/urls/`)
-  } else {
-    const templateVars = {
-      user: users[loggedIn]
-    }
-    res.render("urls_login", templateVars);
-  }
-});
 
 
 app.post("/login", (req, res) => {
@@ -262,22 +255,18 @@ app.post("/login", (req, res) => {
     } else {
       req.session.user_id = user.id;
       res.redirect('/urls')
-    }
-  }
+    };
+  };
 });
 
 
 
-
-// post for logout
 
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect(`/urls`)
 });
 
-
-// app.listen for port 8080
 
 
 app.listen(PORT, () => {
