@@ -5,7 +5,7 @@ const getUserByEmail = function (email, database) {
       return database[user];
     }
   }
-}
+};
 
 
 
@@ -22,18 +22,6 @@ const urlsForUser = function(id, urlDatabase) {
 
 
 
-
-const emailHasUser = function (email) {
-  console.log(Object.keys(users));
-  for (const user of Object.keys(users)) {
-    console.log(users[user]);
-    console.log(email);
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return null;
-};
 
 
 function generateRandomString() {
@@ -52,17 +40,8 @@ function generateRandomString() {
 };
 
 
-const cookieHasUser = function (cookie, userDatabase) {
-  for (const user in userDatabase) {
-    if (cookie === user) {
-      console.log('this checks out')
-      return true;
-    }
-  } return null;
-};
 
 
 
 
-
-module.exports = { getUserByEmail, urlsForUser, emailHasUser,generateRandomString, cookieHasUser };
+module.exports = { getUserByEmail, urlsForUser,generateRandomString};
