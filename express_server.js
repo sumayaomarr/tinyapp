@@ -76,7 +76,7 @@ app.get("/urls", (req, res) => {
     res.render("urls_index", templateVars);
   } else {
     res.send(
-      '<html><body>Please Log in First! Go to <a href="http://localhost:8080/login"> http://localhost:8080/login <a/></body></html>\n'
+      '<html><body>Please Log in First! Go to <a href="/login"> login <a/></body></html>\n'
     );
   }
 });
