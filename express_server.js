@@ -82,9 +82,7 @@ app.get("/urls", (req, res) => {
     res.render("urls_index", templateVars);
   } else {
     res.redirect("/login");
-    // res.send(
-    //   '<html><body>Please Log in First! Go to <a href="/login"> login <a/></body></html>\n'
-    // );
+   
   }
 });
 
