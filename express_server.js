@@ -51,7 +51,13 @@ const urlDatabase = {
 // ==================================================================
 
 app.get("/", (req, res) => {
+  const loggedIn = !!users[req.session.user_id];
+if (loggedin){
   res.redirect("/urls");
+} else {
+  res.redirect("/login");
+}
+  
 });
 
 app.get("/urls.json", (req, res) => {
@@ -75,9 +81,10 @@ app.get("/urls", (req, res) => {
 
     res.render("urls_index", templateVars);
   } else {
-    res.send(
-      '<html><body>Please Log in First! Go to <a href="/login"> login <a/></body></html>\n'
-    );
+    res.redirect("/login");
+    // res.send(
+    //   '<html><body>Please Log in First! Go to <a href="/login"> login <a/></body></html>\n'
+    // );
   }
 });
 
@@ -187,9 +194,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
 
   if (!user) {
-    res.status(404).send("Please login to delete urls");
+    return res.status(404).send("Please login to delete urls");
   } else if (!urls[shortURL]) {
-    res.status(404).send("you are not authorized to delete this URL");
+   return res.status(404).send("you are not authorized to delete this URL");
   }
   delete urlDatabase[shortURL];
   res.redirect("/urls");
